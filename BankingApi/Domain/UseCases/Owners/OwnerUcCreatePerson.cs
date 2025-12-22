@@ -1,25 +1,21 @@
 using BankingApi.Domain.Entities;
+using BankingApi.Domain.Utils;
 namespace BankingApi.Domain.UseCases.Owners;
 
-public sealed class OwnerUcCreate(
-   IOwnerRepository repository,
-   IUnitOfWork unitOfWork,
-   ILogger<OwnerUcCreate> logger
-) : IOwnerUcCreate {
-   
-   private readonly IOwnerRepository _repository = repository;
-   private readonly IUnitOfWork _unitOfWork = unitOfWork;
-   private readonly ILogger<OwnerUcCreate> _logger = logger;
+public sealed class OwnerUcCreatePerson(
+   IOwnerRepository _repository,
+   IUnitOfWork _unitOfWork,
+   ILogger<OwnerUcCreatePerson> _logger
+) : IOwnerUcCreatePerson {
 
    public async Task<Result<Owner>> ExecuteAsync(
       string firstName,
       string lastName,
       string email
    ) {
-      
-      var result = Owner.Create(firstName, lastName, email);
+      var result = Owner.CreatePerson(firstName, lastName, email);
       if (!result.IsSuccess) {
-         _logger.LogWarning("Create Owner failed: {ErrorCode}", result.Errors!.Code);
+         _logger.LogWarning("Create Owner (Person) failed: {Err}", result.Error!.Code);
          return result;
       }
 
@@ -29,7 +25,7 @@ public sealed class OwnerUcCreate(
       // save all changes to database using a transaction
       await _unitOfWork.SaveChangesAsync();
 
-      _logger.LogInformation("Owner created successfully: {OwnerId}", result.Value!.Id);
+      _logger.LogInformation("Owner (Person) created successfully: {Id}", result.Value!.Id.To8());
 
       return result;
    }

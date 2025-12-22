@@ -1,22 +1,45 @@
 using BankingApi.Data.Database;
-using BankingApi.Domain;
 using BankingApi.Domain.Entities;
 using BankingApi.Domain.Repositories;
 using BankingApi.Domain.Utils;
 using Microsoft.EntityFrameworkCore;
 namespace BankingApi.Data.Repositories;
 
-public class AccountRepository(
-   BankingDbContext dbContext,
-   ILogger<AccountRepository> logger
+public sealed class AccountRepository(
+   BankingDbContext _dbContext,
+   ILogger<AccountRepository> _logger
 ) : IAccountRepository {
+
    
-   private readonly ILogger<AccountRepository> _logger = logger;
-   private readonly BankingDbContext _dbContext = dbContext;
+   public async Task<Account?> FindByIdAsync(Guid accountId) {
+      _logger.LogDebug("Load Account by Id ({Id})", accountId.To8());
+      var account = await _dbContext.Accounts
+         .FirstOrDefaultAsync(a => a.Id == accountId);
+
+      if (account is not null) return account;
+      _logger.LogDebug("Account not found ({Id})", accountId.To8());
+      return null;
+   }
+   
+   public async Task<Account?> FindByIbanAsync(string iban) {
+      _logger.LogDebug("Loading account by IBAN ({Iban})", iban);
+      
+      return await _dbContext.Accounts
+         .FirstOrDefaultAsync(a => a.Iban == iban);
+   }
+   
    
    public Task AddAsync(Account account) {
-      
-      
-      throw new NotImplementedException();
+      _logger.LogDebug("Add Account ({Id}, {Iban})", account.Id.To8(), account.Iban);
+
+      _dbContext.Accounts.Add(account);
+      return Task.CompletedTask;
+   }
+
+   public Task UpdateAsync(Account account) {
+      _logger.LogDebug("Update Account ({Id}, {Iban})", account.Id.To8(), account.Iban);
+
+      _dbContext.Accounts.Update(account);
+      return Task.CompletedTask;
    }
 }

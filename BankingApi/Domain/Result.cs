@@ -5,18 +5,18 @@ public readonly struct Result<T> {
    
    public bool IsSuccess { get; }
    public T? Value { get; }
-   public DomainErrors? Errors { get; }
+   public DomainErrors? Error { get; }
 
    private Result(T value) {
       IsSuccess = true;
       Value = value;
-      Errors = null;
+      Error = null;
    }
 
-   private Result(DomainErrors errors) {
+   private Result(DomainErrors error) {
       IsSuccess = false;
       Value = default;
-      Errors = errors;
+      Error = error;
    }
 
    public static Result<T> Success(T value) => new(value);
@@ -30,8 +30,8 @@ public readonly struct Result<T> {
    }
 
    public Result<T> OnFailure(Action<DomainErrors> action) {
-      if (!IsSuccess && Errors is not null)
-         action(Errors);
+      if (!IsSuccess && Error is not null)
+         action(Error);
       return this;
    }
 }

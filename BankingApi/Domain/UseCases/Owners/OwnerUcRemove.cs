@@ -3,13 +3,10 @@ using BankingApi.Domain.Utils;
 namespace BankingApi.Domain.UseCases.Owners;
 
 public sealed class OwnerUcRemove(
-   IOwnerRepository repository,
-   IUnitOfWork unitOfWork,
-   ILogger<OwnerUcRemove> logger
+   IOwnerRepository _repository,
+   IUnitOfWork _unitOfWork,
+   ILogger<OwnerUcRemove> _logger
 ) : IOwnerUcRemove {
-   private readonly IOwnerRepository _repository = repository;
-   private readonly IUnitOfWork _unitOfWork = unitOfWork;
-   private readonly ILogger<OwnerUcRemove> _logger = logger;
 
    public async Task<Result<Guid>> ExecuteAsync(Guid ownerId) {
       var owner = await _repository.FindByIdAsync(ownerId);
@@ -18,10 +15,10 @@ public sealed class OwnerUcRemove(
          return Result<Guid>.Fail(OwnerErrors.NotFound);
       }
 
-      // if (owner.HasAccounts()) {
-      //    _logger.LogWarning("Delete Owner failed: owner has accounts ({Id})",ownerId.To8());
-      //    return Result<Guid>.Fail(OwnerErrors.HasAccounts);
-      // }
+      if (owner.HasAccounts()) {
+          _logger.LogWarning("Delete Owner failed: owner has accounts ({Id})",ownerId.To8());
+          return Result<Guid>.Fail(OwnerErrors.HasAccounts);
+      }
 
       await _repository.RemoveAsync(owner);
       await _unitOfWork.SaveChangesAsync();

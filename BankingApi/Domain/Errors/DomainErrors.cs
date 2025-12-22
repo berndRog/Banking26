@@ -15,6 +15,12 @@ public sealed record DomainErrors(
    public static readonly DomainErrors Unexpected =
       new("unexpected", "An unexpected domain error occurred.");
    
+   public static readonly DomainErrors NotFound =
+      new("domain.notFound", "Requested resource was not found."); 
+   
+   public static readonly DomainErrors Forbidden =
+      new("domain.forbidden", "Operation is not allowed.");
+   
    public static readonly DomainErrors InvalidGuidFormat =
       new("invalid_guid", "The provided identifier is not a valid GUID.");
 }

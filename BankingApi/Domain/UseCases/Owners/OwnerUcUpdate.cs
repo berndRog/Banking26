@@ -3,14 +3,10 @@ using BankingApi.Domain.Errors;
 namespace BankingApi.Domain.UseCases.Owners;
 
 public sealed class OwnerUcUpdate(
-   IOwnerRepository repository,
-   IUnitOfWork unitOfWork,
-   ILogger<OwnerUcUpdate> logger
+   IOwnerRepository _repository,
+   IUnitOfWork _unitOfWork,
+   ILogger<OwnerUcUpdate> _logger
 ) : IOwnerUcUpdate {
-
-   private readonly IOwnerRepository _repository = repository;
-   private readonly IUnitOfWork _unitOfWork = unitOfWork;
-   private readonly ILogger<OwnerUcUpdate> _logger = logger;
 
    public async Task<Result<Owner>> ExecuteAsync(
       Guid ownerId,
@@ -24,7 +20,7 @@ public sealed class OwnerUcUpdate(
 
       var result = owner.ChangeEmail(email);
       if(!result.IsSuccess) {
-         _logger.LogWarning("Update Owner failed: {1} ({2})", result.Errors!.Code, ownerId);
+         _logger.LogWarning("Update Owner failed: {1} ({2})", result.Error!.Code, ownerId);
          return result;
       }
 

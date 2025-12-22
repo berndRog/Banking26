@@ -11,15 +11,24 @@ public static class DiAddDomainExtensions {
       // ----------------------------
       // Owner UseCases
       // ----------------------------
-      services.AddScoped<IOwnerUcCreate, OwnerUcCreate>();
+      services.AddScoped<IOwnerUcCreatePerson, OwnerUcCreatePerson>();
+      services.AddScoped<IOwnerUcCreateCompany, OwnerUcCreateCompany>();
       services.AddScoped<IOwnerUcUpdate, OwnerUcUpdate>();
       services.AddScoped<IOwnerUcRemove, OwnerUcRemove>();
+      services.AddScoped<IOwnerUcAddAccount, OwnerUcAddAccount>();
       services.AddScoped<IOwnerUseCases, OwnerUseCases>();
 
       // ----------------------------
       // Account UseCases
       // ----------------------------
-      services.AddScoped<IOwnerUcAddAccount, OwnerUcAddAccount>();
+      
+      services.AddScoped<IAccountUcGetTransactions, AccountUcGetTransactions>();
+      services.AddScoped<IAccountUcAddBeneficiary, AccountUcAddBeneficiary>();
+      services.AddScoped<IAccountUcRemoveBeneficiary, AccountUcRemoveBeneficiary>();
+      services.AddScoped<IAccountUcExecuteTransfer, AccountUcExecuteTransfer>();
+      services.AddScoped<IAccountUcReverseTransfer, AccountUcReverseTransfer>();
+
+      services.AddScoped<IAccountUseCases, AccountUseCases>();
 
       return services;
    }

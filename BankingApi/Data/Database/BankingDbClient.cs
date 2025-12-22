@@ -7,6 +7,11 @@ public sealed class BankingDbContext(
 ) : DbContext(options) {
    
    public DbSet<Owner> Owners => Set<Owner>();
+   public DbSet<Account> Accounts => Set<Account>();
+   public DbSet<Beneficiary> Beneficiaries => Set<Beneficiary>();
+   public DbSet<Transfer> Transfers => Set<Transfer>();
+   public DbSet<Transaction> Transactions => Set<Transaction>();
+
 
    protected override void OnModelCreating(ModelBuilder modelBuilder) {
       modelBuilder.Entity<Owner>(b => {
