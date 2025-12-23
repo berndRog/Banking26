@@ -4,71 +4,63 @@ using BankingApi.Domain.Repositories;
 namespace BankingApi.Domain.UseCases.Accounts;
 
 public sealed class AccountUcReverseTransfer(
-   ITransferRepository transferRepository,
-   IAccountRepository accountRepository,
-   ITransactionRepository transactionRepository,
-   IUnitOfWork unitOfWork
+   ITransferRepository _transferRepository,
+   IAccountRepository _accountRepository,
+   ITransactionRepository _transactionRepository,
+   IUnitOfWork _unitOfWork
 ) : IAccountUcReverseTransfer {
-
-   private readonly ITransferRepository _transferRepository = transferRepository;
-   private readonly IAccountRepository _accountRepository = accountRepository;
-   private readonly ITransactionRepository _transactionRepository = transactionRepository;
-   private readonly IUnitOfWork _unitOfWork = unitOfWork;
-
+   
    public async Task<Result<Transfer>> ExecuteAsync(
       Guid accountId,
       Guid originalTransferId,
-      string reason
+      string reason,
+      CancellationToken ct = default
    ) {
-
-      // 1️ Originaltransfer laden
-      var original = await _transferRepository.FindByIdAsync(originalTransferId);
+      // 1 load original transfer
+      var original = await _transferRepository.FindByIdAsync(originalTransferId, ct);
       if (original is null)
          return Result<Transfer>.Fail(TransferErrors.NotFound);
 
-      // 2 Sicherheits-/Ownership-Check
+      // 2 Safety check ownership
       if (original.FromAccountId != accountId)
          return Result<Transfer>.Fail(DomainErrors.Forbidden);
 
-      // 3 Bereits storniert?
-      if (await _transferRepository.ExistsReversalForAsync(original.Id))
+      // 3 Already reversed
+      if (await _transferRepository.ExistsReversalForAsync(original.Id, ct))
          return Result<Transfer>.Fail(TransferErrors.AlreadyReversed);
 
-      // 4️⃣ Konten laden
-      var sender = await _accountRepository.FindByIdAsync(original.FromAccountId);
-      var receiver = await _accountRepository.FindByIdAsync(original.ToAccountId);
-
+      // 4 Load Accounts
+      var sender = await _accountRepository.FindByIdAsync(original.FromAccountId, ct);
+      var receiver = await _accountRepository.FindByIdAsync(original.ToAccountId, ct);
       if (sender is null || receiver is null)
          return Result<Transfer>.Fail(DomainErrors.NotFound);
 
-      // 5️⃣ Salden prüfen & ändern (Domain!)
-      var withdraw = receiver.Withdraw(original.Amount);
-      if (!withdraw.IsSuccess)
+      // 5 Check whether account balance is suffient for withdraw amount
+      var result = receiver.Withdraw(original.Amount);
+      if (!result.IsSuccess)
          return Result<Transfer>.Fail(TransferErrors.InsufficientFunds);
-
       sender.Deposit(original.Amount);
+      
+      // 6 new transfer (Storno!)
+      var dtOffsetNow = DateTimeOffset.UtcNow;
+      var reversalTransfer = new Transfer(receiver.Id, sender.Id, dtOffsetNow, original.Amount,
+         $"REVERSAL: {reason}",original.Id);
+      
+      // 7 two new transaction (Buchungen):
+      // withdraw from receiver (Lastschrift)
+      var withDrawTransaction = new Transaction(receiver.Id, reversalTransfer.Id, 
+         dtOffsetNow, -original.Amount, reversalTransfer.Purpose);
+      // deposit to sender (Gutschrift)
+      var depositTransaction = new Transaction(sender.Id, reversalTransfer.Id, 
+         dtOffsetNow, original.Amount, reversalTransfer.Purpose);
 
-      // 6️⃣ Neuer Transfer (Storno!)
-      var reversal = new Transfer(
-         fromAccountId: receiver.Id,
-         toAccountId: sender.Id,
-         amount: original.Amount,
-         purpose: $"REVERSAL: {reason}",
-         reversalOfTransferId: original.Id
-      );
-
-      await _transferRepository.AddAsync(reversal);
-
-      // 7 Zwei neue Buchungen
-      await _transactionRepository.AddAsync(
-         new Transaction(receiver.Id, reversal.Id, -original.Amount, reversal.Purpose)
-      );
-      await _transactionRepository.AddAsync(
-         new Transaction(sender.Id, reversal.Id, original.Amount, reversal.Purpose)
-      );
-
-      await _unitOfWork.SaveChangesAsync();
-
-      return Result<Transfer>.Success(reversal);
+      // 8 save changes to repositories
+      _transferRepository.Add(reversalTransfer);
+      _transactionRepository.Add(withDrawTransaction);
+      _transactionRepository.Add(depositTransaction);
+      
+      // 9 unit of work: save changes to database
+      await _unitOfWork.SaveAllChangesAsync("Reverse transfer",ct);
+      return Result<Transfer>.Success(reversalTransfer);
    }
 }

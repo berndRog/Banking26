@@ -5,6 +5,7 @@ public interface IOwnerUcCreatePerson {
    Task<Result<Owner>> ExecuteAsync(
       string firstName,
       string lastName,
-      string email
+      string email,
+      CancellationToken ct = default
    );
 }

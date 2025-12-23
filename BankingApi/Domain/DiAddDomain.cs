@@ -13,7 +13,7 @@ public static class DiAddDomainExtensions {
       // ----------------------------
       services.AddScoped<IOwnerUcCreatePerson, OwnerUcCreatePerson>();
       services.AddScoped<IOwnerUcCreateCompany, OwnerUcCreateCompany>();
-      services.AddScoped<IOwnerUcUpdate, OwnerUcUpdate>();
+      services.AddScoped<IOwnerUcUpdateEmail, OwnerUcUpdateEmail>();
       services.AddScoped<IOwnerUcRemove, OwnerUcRemove>();
       services.AddScoped<IOwnerUcAddAccount, OwnerUcAddAccount>();
       services.AddScoped<IOwnerUseCases, OwnerUseCases>();

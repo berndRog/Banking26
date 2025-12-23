@@ -7,21 +7,21 @@ using Microsoft.Extensions.Logging;
 namespace BankingApi.Data.Repositories;
 
 public sealed class TransferRepository(
-   BankingDbContext dbContext,
-   ILogger<TransferRepository> logger
+   BankingDbContext _dbContext,
+   ILogger<TransferRepository> _logger
 ) : ITransferRepository {
-
-   private readonly BankingDbContext _dbContext = dbContext;
-   private readonly ILogger<TransferRepository> _logger = logger;
-
-   public async Task<Transfer?> FindByIdAsync(Guid transferId) {
+   
+   public async Task<Transfer?> FindByIdAsync(
+      Guid transferId,
+      CancellationToken ct = default
+   ) {
       _logger.LogDebug("Loading Transfer {Id}", transferId);
 
       return await _dbContext.Transfers
-         .FirstOrDefaultAsync(t => t.Id == transferId);
+         .FirstOrDefaultAsync(t => t.Id == transferId, ct);
    }
 
-   public async Task AddAsync(Transfer transfer) {
+   public void Add(Transfer transfer) {
       _logger.LogDebug(
          "Adding Transfer {Id} From={From} To={To} Amount={Amount}",
          transfer.Id,
@@ -29,17 +29,27 @@ public sealed class TransferRepository(
          transfer.ToAccountId,
          transfer.Amount
       );
-
-      await _dbContext.Transfers.AddAsync(transfer);
+      _dbContext.Transfers.Add(transfer);
    }
 
-   public Task<IReadOnlyList<Transfer>> FindByAccountIdAsync(Guid accountId) {
-      throw new NotImplementedException();
+   public async Task<IReadOnlyList<Transfer>> FindByAccountIdAsync(
+      Guid accountId,
+      CancellationToken ct = default
+   ) {
+      _logger.LogDebug("Loading Transfers for Account {Id}", accountId);
+
+      return await _dbContext.Transfers
+         .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
+         .OrderByDescending(t => t.DtOffSet)
+         .ToListAsync(ct);
    }
    
-   public async Task<bool> ExistsReversalForAsync(Guid originalTransferId) {
+   public async Task<bool> ExistsReversalForAsync(
+      Guid originalTransferId,
+      CancellationToken ct = default
+   ) {
       return await _dbContext.Transfers
-         .AnyAsync(t => t.ReversalOfTransferId == originalTransferId);
+         .AnyAsync(t => t.ReversalOfTransferId == originalTransferId, ct);
    }
 
 

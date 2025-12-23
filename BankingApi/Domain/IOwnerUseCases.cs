@@ -4,6 +4,6 @@ public interface IOwnerUseCases {
    IOwnerUcCreatePerson CreatePerson { get; }
    IOwnerUcCreateCompany CreateCompany { get; }
    IOwnerUcAddAccount AddAccount { get; }
-   IOwnerUcUpdate Update { get; }
+   IOwnerUcUpdateEmail UpdateEmail { get; }
    IOwnerUcRemove Remove { get; }
 }

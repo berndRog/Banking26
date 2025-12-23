@@ -6,6 +6,7 @@ public interface IAccountUcReverseTransfer {
    Task<Result<Transfer>> ExecuteAsync(
       Guid accountId,
       Guid originalTransferId,
-      string reason
+      string reason,
+      CancellationToken ct = default
    );
 }

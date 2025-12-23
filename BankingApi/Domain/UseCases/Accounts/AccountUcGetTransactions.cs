@@ -12,7 +12,8 @@ public sealed class AccountUcGetTransactions(
    public async Task<Result<IReadOnlyList<Entities.Transaction>>> ExecuteAsync(
       Guid accountId,
       DateOnly fromDate,
-      DateOnly toDate
+      DateOnly toDate,
+      CancellationToken ct = default
    ) {
 
       if (fromDate > toDate) {
@@ -24,18 +25,16 @@ public sealed class AccountUcGetTransactions(
             .Fail(TransactionErrors.InvalidPeriod);
       }
 
-      var account = await accountRepository.FindByIdAsync(accountId);
+      var account = await accountRepository.FindByIdAsync(accountId, ct);
       if (account is null) {
-         logger.LogWarning(
-            "Get transactions failed: account not found ({AccountId})",
-            accountId.To8()
-         );
+         logger.LogWarning("Get transactions failed: account not found ({AccountId})",
+            accountId.To8());
          return Result<IReadOnlyList<Entities.Transaction>>
             .Fail(TransactionErrors.AccountNotFound);
       }
 
       var transactions = await transactionRepository
-            .FindByAccountIdAndPeriodAsync(accountId, fromDate, toDate);
+            .SelectByAccountIdAndPeriodAsync(accountId, fromDate, toDate);
 
       logger.LogInformation(
          "Loaded {Count} transactions for account {AccountId}",

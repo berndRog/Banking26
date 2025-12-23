@@ -5,6 +5,7 @@ public interface IAccountUcGetTransactions {
    Task<Result<IReadOnlyList<Entities.Transaction>>> ExecuteAsync(
       Guid accountId,
       DateOnly fromDate,
-      DateOnly toDate
+      DateOnly toDate,
+      CancellationToken ct = default
    );
 }

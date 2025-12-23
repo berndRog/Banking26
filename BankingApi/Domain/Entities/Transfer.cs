@@ -13,6 +13,7 @@ namespace BankingApi.Domain.Entities;
 public sealed class Transfer {
 
    public Guid Id { get; private set; }
+   public DateTimeOffset DtOffSet { get; private set; }
    public Guid FromAccountId { get; private set; }
    public Guid ToAccountId   { get; private set; }
    public decimal Amount     { get; private set; }
@@ -28,6 +29,7 @@ public sealed class Transfer {
    public Transfer(
       Guid fromAccountId,
       Guid toAccountId,
+      DateTimeOffset dtOffset,
       decimal amount,
       string purpose,
       Guid? reversalOfTransferId = null
@@ -35,6 +37,7 @@ public sealed class Transfer {
       Id = Guid.NewGuid();
       FromAccountId = fromAccountId;
       ToAccountId   = toAccountId;
+      DtOffSet      = dtOffset;
       Amount        = amount;
       Purpose       = purpose;
       ReversalOfTransferId = reversalOfTransferId;

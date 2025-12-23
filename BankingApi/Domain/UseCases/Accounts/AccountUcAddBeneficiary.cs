@@ -16,10 +16,11 @@ public sealed class AccountUcAddBeneficiary(
       string firstName,
       string lastName,
       string companyName,
-      string iban
+      string iban,
+      CancellationToken ct = default
    ) {
 
-      var account = await _accountRepository.FindByIdAsync(accountId);
+      var account = await _accountRepository.FindByIdAsync(accountId, ct);
       if (account is null) {
          _logger.LogWarning("Add Beneficiary failed: account not found ({Id})", accountId.To8());
          return Result<Beneficiary>.Fail(BeneficiaryErrors.AccountNotFound);
@@ -31,8 +32,8 @@ public sealed class AccountUcAddBeneficiary(
          return result;
       }
 
-      await _beneficiaryRepository.AddAsync(result.Value!);
-      await _unitOfWork.SaveChangesAsync();
+      _beneficiaryRepository.Add(result.Value!);
+      await _unitOfWork.SaveAllChangesAsync("Add beneficiary to account", ct);
 
       _logger.LogDebug("Beneficiary added ({Id}) to Account ({AccountId})",
          result.Value!.Id.To8(), accountId.To8());

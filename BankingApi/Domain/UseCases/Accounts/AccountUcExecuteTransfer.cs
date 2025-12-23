@@ -18,23 +18,24 @@ public sealed class AccountUcExecuteTransfer(
       Guid fromAccountId,
       Guid beneficiaryId,
       decimal amount,
-      string purpose
+      string purpose,
+      CancellationToken ct = default
    ) {
       if (amount <= 0m)
          return Result<Transfer>.Fail(TransferErrors.InvalidAmount);
 
       // 1) Load sender account
-      var fromAccount = await _accountRepository.FindByIdAsync(fromAccountId);
+      var fromAccount = await _accountRepository.FindByIdAsync(fromAccountId, ct);
       if (fromAccount is null)
          return Result<Transfer>.Fail(TransferErrors.AccountNotFound);
 
       // 2) Load beneficiary (must belong to sender account)
-      var beneficiary = await _beneficiaryRepository.FindByIdAsync(beneficiaryId);
+      var beneficiary = await _beneficiaryRepository.FindByIdAsync(beneficiaryId, ct);
       if (beneficiary is null || beneficiary.AccountId != fromAccountId)
          return Result<Transfer>.Fail(TransferErrors.BeneficiaryNotFound);
 
       // 3) Load receiver account via IBAN
-      var toAccount = await _accountRepository.FindByIbanAsync(beneficiary.Iban);
+      var toAccount = await _accountRepository.FindByIbanAsync(beneficiary.Iban, ct);
       if (toAccount is null)
          return Result<Transfer>.Fail(TransferErrors.AccountNotFound);
 
@@ -42,9 +43,12 @@ public sealed class AccountUcExecuteTransfer(
          return Result<Transfer>.Fail(TransferErrors.SameAccount);
 
       // 4) Create transfer
+      // unique timestamp for transfer and transactions
+      var dtOffsetNow = DateTimeOffset.UtcNow;
       var transfer = new Transfer(
          fromAccount.Id,
          toAccount.Id,
+         dtOffsetNow,
          amount,
          purpose
       );
@@ -60,26 +64,29 @@ public sealed class AccountUcExecuteTransfer(
          return Result<Transfer>.Fail(depositResult.Error!);
 
       // 7) Create transactions
+      // debit from sender (Lastschrift)
       var debit = new Transaction(
          fromAccount.Id,
          transfer.Id,
+         dtOffsetNow,
          -amount,
          purpose
       );
-
+      // credit to receiver (Gutschrift)
       var credit = new Transaction(
          toAccount.Id,
          transfer.Id,
+         dtOffsetNow,
          amount,
          purpose
       );
 
-      // 8) Persist everything atomically
-      await _transferRepository.AddAsync(transfer);
-      await _transactionRepository.AddAsync(debit);
-      await _transactionRepository.AddAsync(credit);
+      // 8) add changes to repositiroes
+      _transferRepository.Add(transfer);
+      _transactionRepository.Add(debit);
+      _transactionRepository.Add(credit);
 
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.SaveAllChangesAsync("Execute transfer", ct);
 
       _logger.LogDebug(
          "Transfer executed ({Id}) {From} -> {To}, Amount={Amount}",

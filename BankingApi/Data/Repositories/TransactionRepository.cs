@@ -10,40 +10,35 @@ public sealed class TransactionRepository(
    ILogger<TransactionRepository> _logger
 ) : ITransactionRepository {
 
-   public Task<Transaction?> FindByIdAsync(Guid transactionId) {
-      _logger.LogDebug("Load Transaction {Id}", transactionId);
-
-      return _dbContext.Transactions
-         .FirstOrDefaultAsync(t => t.Id == transactionId);
-   }
-
-   public async Task AddAsync(Transaction transaction) {
-      _logger.LogDebug(
-         "Add Transaction {Id} Account={AccId} Amount={Amount}",
-         transaction.Id, transaction.AccountId, transaction.Amount);
-
-      await _dbContext.Transactions.AddAsync(transaction);
-   }
-
-   public async Task<IReadOnlyList<Transaction>> FindByAccountIdAsync(Guid accountId) {
-      _logger.LogDebug("Load Transactions for Account {AccountId}", accountId);
+   
+   public async Task<IReadOnlyList<Transaction>> SelectByAccountIdAsync(
+      Guid accountId,
+      CancellationToken ct = default
+   ) {
+      _logger.LogDebug("Load Transactions for Account {Id}", accountId);
 
       return await _dbContext.Transactions
          .Where(t => t.AccountId == accountId)
          .OrderByDescending(t => t.BookingDate)
-         .ToListAsync();
+         .ToListAsync(ct);
    }
    
-   public async Task<IReadOnlyList<Transaction>> FindByAccountIdAndPeriodAsync(
+   public async Task<IReadOnlyList<Transaction>> SelectByAccountIdAndPeriodAsync(
       Guid accountId,
       DateOnly fromDate,
-      DateOnly toDate
+      DateOnly toDate,
+      CancellationToken ct = default
    ) {
-      var fromUtc = fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-      var toUtc   = toDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
-
+      var fromUtc = new DateTimeOffset(
+         fromDate.ToDateTime(TimeOnly.MinValue),
+         TimeSpan.Zero
+      );
+      var toUtc = new DateTimeOffset(
+         toDate.ToDateTime(TimeOnly.MaxValue),
+         TimeSpan.Zero
+      );
       _logger.LogDebug("Load transactions for account {Id} from {From} to {To}",
-         accountId.To8(), fromDate, toDate);
+         accountId.To8(), fromDate.ToString("yyyy-MM-dd"), toDate.ToString("yyyy-MM-dd"));
 
       return await _dbContext.Transactions
          .Where(t =>
@@ -52,6 +47,24 @@ public sealed class TransactionRepository(
             t.BookingDate <= toUtc
          )
          .OrderByDescending(t => t.BookingDate)
-         .ToListAsync();
+         .ToListAsync(ct);
    }
+   
+   public Task<Transaction?> FindByIdAsync(
+      Guid transactionId,
+      CancellationToken ct = default
+   ) {
+      _logger.LogDebug("Load Transaction {Id}", transactionId);
+      return _dbContext.Transactions
+         .FirstOrDefaultAsync(t => t.Id == transactionId, ct);
+   }
+   
+   public void Add(Transaction transaction) {
+      _logger.LogDebug(
+         "Add Transaction {Id} Account={AccId} Amount={Amount}",
+         transaction.Id, transaction.AccountId, transaction.Amount);
+
+      _dbContext.Transactions.Add(transaction);
+   }
+
 }

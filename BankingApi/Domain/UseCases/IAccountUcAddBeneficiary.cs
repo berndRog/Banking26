@@ -7,6 +7,7 @@ public interface IAccountUcAddBeneficiary {
       string firstName,
       string lastName,
       string companyName,
-      string iban
+      string iban,
+      CancellationToken ct = default
    );
 }

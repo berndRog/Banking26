@@ -2,12 +2,22 @@ using BankingApi.Domain.Entities;
 namespace BankingApi.Domain;
 
 public interface ITransactionRepository {
-   Task<Transaction?> FindByIdAsync(Guid transactionId);
-   Task<IReadOnlyList<Transaction>> FindByAccountIdAsync(Guid accountId);
-   Task<IReadOnlyList<Transaction>> FindByAccountIdAndPeriodAsync(
+   Task<Transaction?> FindByIdAsync(
+      Guid transactionId,
+      CancellationToken ct = default
+   );
+   
+   Task<IReadOnlyList<Transaction>> SelectByAccountIdAsync(
+      Guid accountId,
+      CancellationToken ct = default
+   );
+   
+   Task<IReadOnlyList<Transaction>> SelectByAccountIdAndPeriodAsync(
       Guid accountId,
       DateOnly fromDate,
-      DateOnly toDate
+      DateOnly toDate,
+      CancellationToken ct = default
    );
-   Task AddAsync(Transaction transaction);
+   
+   void Add(Transaction transaction);
 }

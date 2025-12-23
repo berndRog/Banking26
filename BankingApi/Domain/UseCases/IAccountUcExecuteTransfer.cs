@@ -6,6 +6,7 @@ public interface IAccountUcExecuteTransfer {
       Guid fromAccountId,
       Guid beneficiaryId,
       decimal amount,
-      string purpose
+      string purpose,
+      CancellationToken ctToken = default
    );
 }

@@ -22,6 +22,7 @@ public static class DiAddDataExtensions {
       // Repositories
       services.AddScoped<IOwnerRepository, OwnerRepository>();
       services.AddScoped<IAccountRepository, AccountRepository>();
+      services.AddScoped<IBeneficiaryRepository, BeneficiaryRepository>();
 
       return services;
    }

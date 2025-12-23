@@ -3,7 +3,8 @@ namespace BankingApi.Domain.UseCases;
 
 public interface IOwnerUcRemove {
    Task<Result<Guid>> ExecuteAsync(
-      Guid ownerId
+      Guid ownerId,
+      CancellationToken ct = default
    );
 }
 

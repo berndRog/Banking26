@@ -12,22 +12,23 @@ public sealed class OwnerUcCreateCompany(
       string firstName,
       string lastName,
       string companyName,
-      string email
+      string email,
+      CancellationToken ct = default
    ) {
-      var result = Owner.CreateCompany(firstName, lastName, companyName, email);
-      if (!result.IsSuccess) {
-         _logger.LogWarning("Create Owner (Company) failed: {Err}", result.Error!.Code);
-         return result;
+      var owner = Owner.CreateCompany(firstName, lastName, companyName, email);
+      if (!owner.IsSuccess) {
+         _logger.LogWarning("Create Owner (Company) failed: {Err}", owner.Error!.Code);
+         return owner;
       }
 
       // The UseCase represents one business transaction:
       // added changes are tracked via repositories and committed once - as unit of Work
-      await _repository.AddAsync(result.Value!);
+      _repository.Add(owner.Value!);
       // save all changes to database using a transaction
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.SaveAllChangesAsync("Create Owner(Company)",ct);
 
-      _logger.LogInformation("Owner (Company) created successfully: {Id}", result.Value!.Id.To8());
+      _logger.LogInformation("Owner (Company) created successfully: {Id}", owner.Value!.Id.To8());
 
-      return result;
+      return owner;
    }
 }

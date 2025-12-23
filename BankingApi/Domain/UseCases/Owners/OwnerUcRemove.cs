@@ -8,8 +8,11 @@ public sealed class OwnerUcRemove(
    ILogger<OwnerUcRemove> _logger
 ) : IOwnerUcRemove {
 
-   public async Task<Result<Guid>> ExecuteAsync(Guid ownerId) {
-      var owner = await _repository.FindByIdAsync(ownerId);
+   public async Task<Result<Guid>> ExecuteAsync(
+      Guid ownerId,
+      CancellationToken ct = default
+   ){
+      var owner = await _repository.FindByIdAsync(ownerId, ct);
       if (owner is null) {
          _logger.LogWarning("Delete Owner failed: not found ({Id})", ownerId.To8());
          return Result<Guid>.Fail(OwnerErrors.NotFound);
@@ -20,8 +23,8 @@ public sealed class OwnerUcRemove(
           return Result<Guid>.Fail(OwnerErrors.HasAccounts);
       }
 
-      await _repository.RemoveAsync(owner);
-      await _unitOfWork.SaveChangesAsync();
+      _repository.Remove(owner);
+      await _unitOfWork.SaveAllChangesAsync("Delete Owner", ct);
       _logger.LogDebug("Owner deleted successfully ({Id})", ownerId.To8());
 
       return Result<Guid>.Success(ownerId);

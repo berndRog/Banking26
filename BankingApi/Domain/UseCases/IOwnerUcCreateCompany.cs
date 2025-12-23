@@ -6,6 +6,7 @@ public interface IOwnerUcCreateCompany {
       string firstName,
       string lastName,
       string companyName,
-      string email
+      string email,
+      CancellationToken ct = default
    );
 }

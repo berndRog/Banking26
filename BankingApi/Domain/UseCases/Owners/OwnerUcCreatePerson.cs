@@ -11,22 +11,23 @@ public sealed class OwnerUcCreatePerson(
    public async Task<Result<Owner>> ExecuteAsync(
       string firstName,
       string lastName,
-      string email
+      string email,
+      CancellationToken ct = default
    ) {
-      var result = Owner.CreatePerson(firstName, lastName, email);
-      if (!result.IsSuccess) {
-         _logger.LogWarning("Create Owner (Person) failed: {Err}", result.Error!.Code);
-         return result;
+      var owner = Owner.CreatePerson(firstName, lastName, email);
+      if (!owner.IsSuccess) {
+         _logger.LogWarning("Create Owner(Person) failed: {Err}", owner.Error!.Code);
+         return owner;
       }
 
       // The UseCase represents one business transaction:
       // added changes are tracked via repositories and committed once - as unit of Work
-      await _repository.AddAsync(result.Value!);
+      _repository.Add(owner.Value!);
       // save all changes to database using a transaction
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.SaveAllChangesAsync("Create Owner(Person)", ct);
 
-      _logger.LogInformation("Owner (Person) created successfully: {Id}", result.Value!.Id.To8());
+      _logger.LogInformation("Owner(Person) created successfully: {Id}", owner.Value!.Id.To8());
 
-      return result;
+      return owner;
    }
 }

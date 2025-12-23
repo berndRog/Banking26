@@ -21,8 +21,18 @@ public readonly struct Result<T> {
 
    public static Result<T> Success(T value) => new(value);
    public static Result<T> Fail(DomainErrors errors) => new(errors);
+   
+   
+   public T GetValueOrDefault(T defaultValue = default!) {
+      return IsSuccess && Value is not null ? Value : defaultValue;
+   }
 
-   // Kotlin-style fluent API
+   public T GetValueOrThrow() {
+      if (!IsSuccess || Value is null)
+         throw new InvalidOperationException($"Result failed: {Error}");
+      return Value;
+   }
+   
    public Result<T> OnSuccess(Action<T> action) {
       if (IsSuccess && Value is not null)
          action(Value);
@@ -34,4 +44,26 @@ public readonly struct Result<T> {
          action(Error);
       return this;
    }
+   
+   public TResult Fold<TResult>(
+      Func<T, TResult> onSuccess,
+      Func<DomainErrors, TResult> onFailure
+   ) {
+      return IsSuccess && Value is not null
+         ? onSuccess(Value)
+         : onFailure(Error!);
+   }
+   /*
+   public Result<TResult> Map<TResult>(Func<T, TResult> mapper) {
+      return IsSuccess && Value is not null
+         ? Result<TResult>.Success(mapper(Value))
+         : Result<TResult>.Fail(Error!);
+   }
+   
+   public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> binder) {
+      return IsSuccess && Value is not null
+         ? binder(Value)
+         : Result<TResult>.Fail(Error!);
+   }
+   */
 }

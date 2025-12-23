@@ -6,39 +6,34 @@ using Microsoft.EntityFrameworkCore;
 namespace BankingApi.Data.Repositories;
 
 public class OwnerRepository(
-   BankingDbContext db,
-   ILogger<OwnerRepository> logger
+   BankingDbContext _dbContext,
+   ILogger<OwnerRepository> _logger
 ) : IOwnerRepository {
-   
-   private readonly BankingDbContext _db = db;
-   private readonly ILogger<OwnerRepository> _logger = logger;
 
-   public async Task<Owner?> FindByIdAsync(Guid ownerId) {
+   public async Task<Owner?> FindByIdAsync(
+      Guid ownerId, 
+      CancellationToken ct = default
+   ) {
       _logger.LogDebug("loading Owner {Id}", ownerId.To8());
-      return await _db.Owners
+      return await _dbContext.Owners
          .AsTracking()
-         .FirstOrDefaultAsync(o => o.Id == ownerId);
+         .FirstOrDefaultAsync(o => o.Id == ownerId, ct);
    }
 
-   public async Task AddAsync(Owner owner) {
+   public void Add(Owner owner) {
       _logger.LogDebug("adding Owner {Id}", owner.Id.To8());
-
-      await _db.Owners.AddAsync(owner);
+      _dbContext.Owners.Add(owner);
    }
-
-   public Task UpdateAsync(Owner owner) {
-      _logger.LogDebug("Repository: updating Owner {Id}", owner.Id.To8());
-      _db.Owners.Update(owner);
-      return Task.CompletedTask;
-   }
-
-   public Task RemoveAsync(Owner owner) {
+   
+   public void Remove(Owner owner) {
       _logger.LogDebug("removing Owner {Id}", owner.Id.To8());
-      _db.Owners.Remove(owner);
-      return Task.CompletedTask;
+      _dbContext.Owners.Remove(owner);
    }
 
-   public Task<bool> HasAccountsAsync(Guid ownerId) {
-      throw new NotImplementedException();
+   public Task<bool> HasAccountsAsync(Guid ownerId, CancellationToken ct = default) {
+      _logger.LogDebug("checking if Owner {Id} has Accounts", ownerId.To8());
+      return _dbContext.Accounts
+         .AsNoTracking()
+         .AnyAsync(a => a.OwnerId == ownerId, ct);
    }
 }

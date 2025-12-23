@@ -15,7 +15,7 @@ namespace BankingApi.Domain.Entities;
 public sealed class Transaction {
 
    public Guid Id { get; private set; }
-   public DateTime BookingDate { get; private set; }
+   public DateTimeOffset BookingDate { get; private set; }
    public decimal Amount { get; private set; }
    public string Purpose { get; private set; } = string.Empty;
 
@@ -29,13 +29,14 @@ public sealed class Transaction {
    public Transaction(
       Guid accountId,
       Guid transferId,
+      DateTimeOffset bookingDate,
       decimal amount,
       string purpose
    ) {
       Id          = Guid.NewGuid();
       AccountId   = accountId;
       TransferId  = transferId;
-      BookingDate = DateTime.UtcNow;
+      BookingDate = bookingDate;
       Amount      = amount;
       Purpose     = purpose;
    }
