@@ -17,13 +17,13 @@ public sealed class OwnerUcUpdateEmail(
       var owner = await _ownerRepository.FindByIdAsync(ownerId, ct);
       if (owner is null) {
          _logger.LogWarning("UpdateEmail email failed: owner not found ({Id})", ownerId.To8());
-         return Result<Owner>.Fail(OwnerErrors.NotFound);
+         return Result<Owner>.Failure(OwnerErrors.NotFound);
       }
 
       var change = owner.ChangeEmail(newEmail);
       if (!change.IsSuccess) {
          _logger.LogWarning("UpdateEmail email failed: {Err}", change.Error!.Code);
-         return Result<Owner>.Fail(change.Error);
+         return Result<Owner>.Failure(change.Error);
       }
 
       await _unitOfWork.SaveAllChangesAsync("Email changes",ct);

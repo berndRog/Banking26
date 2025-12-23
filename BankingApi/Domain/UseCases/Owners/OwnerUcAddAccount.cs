@@ -19,7 +19,7 @@ public sealed class OwnerUcAddAccount(
       var owner = await _ownerRepository.FindByIdAsync(ownerId, ct);
       if (owner is null) {
          _logger.LogWarning("Add Account failed: owner not found ({Id})", ownerId.To8());
-         return Result<Account>.Fail(OwnerErrors.NotFound);
+         return Result<Account>.Failure(OwnerErrors.NotFound);
       }
       
       // domain      

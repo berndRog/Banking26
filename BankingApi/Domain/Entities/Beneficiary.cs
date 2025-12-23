@@ -29,16 +29,16 @@ public sealed class Beneficiary {
    ) {
 
       if (string.IsNullOrWhiteSpace(firstName))
-         return Result<Beneficiary>.Fail(BeneficiaryErrors.InvalidFirstName);
+         return Result<Beneficiary>.Failure(BeneficiaryErrors.InvalidFirstName);
 
       if (string.IsNullOrWhiteSpace(lastName))
-         return Result<Beneficiary>.Fail(BeneficiaryErrors.InvalidLastName);
+         return Result<Beneficiary>.Failure(BeneficiaryErrors.InvalidLastName);
 
       if( companyName != null && string.IsNullOrWhiteSpace(companyName))
-         return Result<Beneficiary>.Fail(BeneficiaryErrors.InvalidCompanyName);
+         return Result<Beneficiary>.Failure(BeneficiaryErrors.InvalidCompanyName);
 
       if (string.IsNullOrWhiteSpace(iban))
-         return Result<Beneficiary>.Fail(BeneficiaryErrors.InvalidIban);
+         return Result<Beneficiary>.Failure(BeneficiaryErrors.InvalidIban);
 
       return Result<Beneficiary>.Success(new Beneficiary {
          Id        = Guid.NewGuid(),

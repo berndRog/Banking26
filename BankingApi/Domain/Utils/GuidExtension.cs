@@ -18,6 +18,6 @@ public static class GuidExtensions {
       if (Guid.TryParse(value, out var guid))
          return Result<Guid>.Success(guid);
 
-      return Result<Guid>.Fail(DomainErrors.InvalidGuidFormat);
+      return Result<Guid>.Failure(DomainErrors.InvalidGuidFormat);
    }
 }

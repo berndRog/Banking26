@@ -15,12 +15,12 @@ public sealed class OwnerUcRemove(
       var owner = await _repository.FindByIdAsync(ownerId, ct);
       if (owner is null) {
          _logger.LogWarning("Delete Owner failed: not found ({Id})", ownerId.To8());
-         return Result<Guid>.Fail(OwnerErrors.NotFound);
+         return Result<Guid>.Failure(OwnerErrors.NotFound);
       }
 
       if (owner.HasAccounts()) {
           _logger.LogWarning("Delete Owner failed: owner has accounts ({Id})",ownerId.To8());
-          return Result<Guid>.Fail(OwnerErrors.HasAccounts);
+          return Result<Guid>.Failure(OwnerErrors.HasAccounts);
       }
 
       _repository.Remove(owner);

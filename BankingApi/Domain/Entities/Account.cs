@@ -10,6 +10,7 @@ public sealed class Account {
 
    // Account -> Owner [0..*] : [1] 
    public Guid OwnerId { get; private set; }
+   
    // Empfänger: Account -> Beneficiaries [1] : [0..*]
    private readonly List<Beneficiary> _beneficiaries = new();
    public IReadOnlyCollection<Beneficiary> Beneficiaries => _beneficiaries.AsReadOnly();
@@ -28,12 +29,11 @@ public sealed class Account {
       Guid ownerId,
       string iban
    ) {
-
       if (ownerId == Guid.Empty)
-         return Result<Account>.Fail(AccountErrors.InvalidOwnerId);
+         return Result<Account>.Failure(AccountErrors.InvalidOwnerId);
 
       if (string.IsNullOrWhiteSpace(iban))
-         return Result<Account>.Fail(AccountErrors.InvalidIban);
+         return Result<Account>.Failure(AccountErrors.InvalidIban);
 
       return Result<Account>.Success(new Account {
          Id      = Guid.NewGuid(),
@@ -50,7 +50,7 @@ public sealed class Account {
    // Domain operation used later by transfers/transactions
    public Result<Account> Deposit(decimal amount) {
       if (amount <= 0m)
-         return Result<Account>.Fail(AccountErrors.InvalidAmount);
+         return Result<Account>.Failure(AccountErrors.InvalidAmount);
 
       Balance += amount;
       return Result<Account>.Success(this);
@@ -58,10 +58,10 @@ public sealed class Account {
    
    public Result<Account> Withdraw(decimal amount) {
       if (amount <= 0m)
-         return Result<Account>.Fail(AccountErrors.InvalidAmount);
+         return Result<Account>.Failure(AccountErrors.InvalidAmount);
 
       if (Balance < amount)
-         return Result<Account>.Fail(AccountErrors.InsufficientFunds);
+         return Result<Account>.Failure(AccountErrors.InsufficientFunds);
 
       Balance -= amount;
       return Result<Account>.Success(this);
@@ -78,21 +78,21 @@ public sealed class Account {
       if (!result.IsSuccess)
          return result;
 
-      // if (_beneficiaries.Any(b => string.Equals(b.Iban, result.Value!.Iban, StringComparison.OrdinalIgnoreCase)))
+      //if (_beneficiaries.Any(b => string.Equals(b.Iban, result.Value!.Iban, StringComparison.OrdinalIgnoreCase)))
       //    return Result<Beneficiary>.Fail(BeneficiaryErrors.DuplicateIban);
 
       _beneficiaries.Add(result.Value!);
       return result;
    }
    
-   // Story 3.2 (Germany): delete beneficiary only
+   // Story 3.2: delete beneficiary only
    public Result<Guid> RemoveBeneficiary(Guid beneficiaryId) {
       if (beneficiaryId == Guid.Empty)
-         return Result<Guid>.Fail(BeneficiaryErrors.InvalidBeneficiaryId);
+         return Result<Guid>.Failure(BeneficiaryErrors.InvalidBeneficiaryId);
 
       var found = _beneficiaries.FirstOrDefault(b => b.Id == beneficiaryId);
       if (found is null)
-         return Result<Guid>.Fail(BeneficiaryErrors.NotFound);
+         return Result<Guid>.Failure(BeneficiaryErrors.NotFound);
 
       _beneficiaries.Remove(found);
       return Result<Guid>.Success(beneficiaryId);

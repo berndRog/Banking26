@@ -2,7 +2,6 @@ using BankingApi.Domain.Entities;
 using BankingApi.Domain.Errors;
 using BankingApi.Domain.Repositories;
 using BankingApi.Domain.Utils;
-
 namespace BankingApi.Domain.UseCases.Accounts;
 
 public sealed class AccountUcExecuteTransfer(
@@ -22,25 +21,25 @@ public sealed class AccountUcExecuteTransfer(
       CancellationToken ct = default
    ) {
       if (amount <= 0m)
-         return Result<Transfer>.Fail(TransferErrors.InvalidAmount);
+         return Result<Transfer>.Failure(TransferErrors.InvalidAmount);
 
       // 1) Load sender account
       var fromAccount = await _accountRepository.FindByIdAsync(fromAccountId, ct);
       if (fromAccount is null)
-         return Result<Transfer>.Fail(TransferErrors.AccountNotFound);
+         return Result<Transfer>.Failure(TransferErrors.AccountNotFound);
 
       // 2) Load beneficiary (must belong to sender account)
       var beneficiary = await _beneficiaryRepository.FindByIdAsync(beneficiaryId, ct);
       if (beneficiary is null || beneficiary.AccountId != fromAccountId)
-         return Result<Transfer>.Fail(TransferErrors.BeneficiaryNotFound);
+         return Result<Transfer>.Failure(TransferErrors.BeneficiaryNotFound);
 
       // 3) Load receiver account via IBAN
       var toAccount = await _accountRepository.FindByIbanAsync(beneficiary.Iban, ct);
       if (toAccount is null)
-         return Result<Transfer>.Fail(TransferErrors.AccountNotFound);
+         return Result<Transfer>.Failure(TransferErrors.AccountNotFound);
 
       if (toAccount.Id == fromAccount.Id)
-         return Result<Transfer>.Fail(TransferErrors.SameAccount);
+         return Result<Transfer>.Failure(TransferErrors.SameAccount);
 
       // 4) Create transfer
       // unique timestamp for transfer and transactions
@@ -56,12 +55,12 @@ public sealed class AccountUcExecuteTransfer(
       // 5) Withdraw sender
       var withdrawResult = fromAccount.Withdraw(amount);
       if (!withdrawResult.IsSuccess)
-         return Result<Transfer>.Fail(withdrawResult.Error!);
+         return Result<Transfer>.Failure(withdrawResult.Error!);
 
       // 6) Deposit receiver
       var depositResult = toAccount.Deposit(amount);
       if (!depositResult.IsSuccess)
-         return Result<Transfer>.Fail(depositResult.Error!);
+         return Result<Transfer>.Failure(depositResult.Error!);
 
       // 7) Create transactions
       // debit from sender (Lastschrift)

@@ -23,7 +23,7 @@ public sealed class AccountUcAddBeneficiary(
       var account = await _accountRepository.FindByIdAsync(accountId, ct);
       if (account is null) {
          _logger.LogWarning("Add Beneficiary failed: account not found ({Id})", accountId.To8());
-         return Result<Beneficiary>.Fail(BeneficiaryErrors.AccountNotFound);
+         return Result<Beneficiary>.Failure(BeneficiaryErrors.AccountNotFound);
       }
 
       var result = Beneficiary.Create(accountId, firstName, lastName, companyName, iban);

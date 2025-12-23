@@ -19,26 +19,26 @@ public sealed class AccountUcReverseTransfer(
       // 1 load original transfer
       var original = await _transferRepository.FindByIdAsync(originalTransferId, ct);
       if (original is null)
-         return Result<Transfer>.Fail(TransferErrors.NotFound);
+         return Result<Transfer>.Failure(TransferErrors.NotFound);
 
       // 2 Safety check ownership
       if (original.FromAccountId != accountId)
-         return Result<Transfer>.Fail(DomainErrors.Forbidden);
+         return Result<Transfer>.Failure(DomainErrors.Forbidden);
 
       // 3 Already reversed
       if (await _transferRepository.ExistsReversalForAsync(original.Id, ct))
-         return Result<Transfer>.Fail(TransferErrors.AlreadyReversed);
+         return Result<Transfer>.Failure(TransferErrors.AlreadyReversed);
 
       // 4 Load Accounts
       var sender = await _accountRepository.FindByIdAsync(original.FromAccountId, ct);
       var receiver = await _accountRepository.FindByIdAsync(original.ToAccountId, ct);
       if (sender is null || receiver is null)
-         return Result<Transfer>.Fail(DomainErrors.NotFound);
+         return Result<Transfer>.Failure(DomainErrors.NotFound);
 
       // 5 Check whether account balance is suffient for withdraw amount
       var result = receiver.Withdraw(original.Amount);
       if (!result.IsSuccess)
-         return Result<Transfer>.Fail(TransferErrors.InsufficientFunds);
+         return Result<Transfer>.Failure(TransferErrors.InsufficientFunds);
       sender.Deposit(original.Amount);
       
       // 6 new transfer (Storno!)

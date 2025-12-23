@@ -16,7 +16,7 @@ public static class OwnerErrors {
 
    public static readonly DomainErrors NotFound =
       new("owner.not_found", "Owner not found.");
-
+   
    public static readonly DomainErrors HasAccounts =
       new("owner.has_accounts", "Owner cannot be deleted because accounts exist.");
 }

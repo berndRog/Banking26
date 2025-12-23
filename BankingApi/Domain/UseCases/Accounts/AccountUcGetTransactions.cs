@@ -22,7 +22,7 @@ public sealed class AccountUcGetTransactions(
             accountId.To8(), fromDate, toDate
          );
          return Result<IReadOnlyList<Entities.Transaction>>
-            .Fail(TransactionErrors.InvalidPeriod);
+            .Failure(TransactionErrors.InvalidPeriod);
       }
 
       var account = await accountRepository.FindByIdAsync(accountId, ct);
@@ -30,11 +30,11 @@ public sealed class AccountUcGetTransactions(
          logger.LogWarning("Get transactions failed: account not found ({AccountId})",
             accountId.To8());
          return Result<IReadOnlyList<Entities.Transaction>>
-            .Fail(TransactionErrors.AccountNotFound);
+            .Failure(TransactionErrors.AccountNotFound);
       }
 
       var transactions = await transactionRepository
-            .SelectByAccountIdAndPeriodAsync(accountId, fromDate, toDate);
+            .SelectByAccountIdAndPeriodAsync(accountId, fromDate, toDate, ct);
 
       logger.LogInformation(
          "Loaded {Count} transactions for account {AccountId}",

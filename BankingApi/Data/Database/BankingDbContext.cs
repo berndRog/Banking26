@@ -25,11 +25,19 @@ public sealed class BankingDbContext(
          builder.HasKey(a => a.Id);
          builder.Property(a => a.Iban).IsRequired();
          builder.Property(a => a.Balance).IsRequired();
-         builder.HasOne<Owner>()
-            .WithMany()
-            .HasForeignKey(a => a.OwnerId)
+         builder.HasOne<Owner>()           // keine Referenz Owner owner in Account
+            .WithMany(o => o.Accounts)     // Owner hat viele Accounts
+            .HasForeignKey(a => a.OwnerId) // Fremdschlüssel OwnerId in Account  
             .OnDelete(DeleteBehavior.Cascade);
       });
+      
+      
+      modelBuilder.Entity<Account>()
+         .HasOne<Owner>()                 
+         .WithMany(o => o.Accounts)       
+         .HasForeignKey(a => a.OwnerId)
+         .IsRequired();
+
       
       modelBuilder.Entity<Beneficiary>(builder => {
          builder.HasKey(b => b.Id);

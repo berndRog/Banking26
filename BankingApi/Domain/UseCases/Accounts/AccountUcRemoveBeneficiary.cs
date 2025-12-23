@@ -16,7 +16,7 @@ public sealed class AccountUcRemoveBeneficiary(
       var beneficiary = await _beneficiaryRepository.FindByIdAsync(beneficiaryId, ct);
       if (beneficiary is null) {
          _logger.LogWarning("Remove Beneficiary failed: not found ({Id})", beneficiaryId.To8());
-         return Result<Guid>.Fail(BeneficiaryErrors.NotFound);
+         return Result<Guid>.Failure(BeneficiaryErrors.NotFound);
       }
 
       _beneficiaryRepository.Remove(beneficiary);
